@@ -26,7 +26,6 @@ package net.runelite.client.plugins.boosts;
 
 import com.google.common.collect.ObjectArrays;
 import com.google.common.eventbus.Subscribe;
-import com.google.inject.Binder;
 import com.google.inject.Provides;
 import java.util.Arrays;
 import javax.inject.Inject;
@@ -40,7 +39,7 @@ import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 
 @PluginDescriptor(
-	name = "Boosts plugin"
+	name = "Boosts"
 )
 public class BoostsPlugin extends Plugin
 {
@@ -67,12 +66,6 @@ public class BoostsPlugin extends Plugin
 	@Getter
 	private Skill[] shownSkills;
 
-	@Override
-	public void configure(Binder binder)
-	{
-		binder.bind(BoostsOverlay.class);
-	}
-
 	@Provides
 	BoostsConfig provideConfig(ConfigManager configManager)
 	{
@@ -88,10 +81,7 @@ public class BoostsPlugin extends Plugin
 	@Override
 	protected void startUp()
 	{
-		if (config.enabled())
-		{
-			updateShownSkills(config.enableSkill());
-		}
+		updateShownSkills(config.enableSkill());
 	}
 
 	@Override
@@ -103,16 +93,14 @@ public class BoostsPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (!config.enabled())
-		{
-			infoBoxManager.removeIf(t -> t instanceof BoostIndicator);
-			return;
-		}
-
+		Skill[] old = shownSkills;
 		updateShownSkills(config.enableSkill());
 
-		infoBoxManager.removeIf(t -> t instanceof BoostIndicator
-			&& !Arrays.asList(shownSkills).contains(((BoostIndicator) t).getSkill()));
+		if (!Arrays.equals(old, shownSkills))
+		{
+			infoBoxManager.removeIf(t -> t instanceof BoostIndicator
+				&& !Arrays.asList(shownSkills).contains(((BoostIndicator) t).getSkill()));
+		}
 	}
 
 	private void updateShownSkills(boolean showSkillingSkills)

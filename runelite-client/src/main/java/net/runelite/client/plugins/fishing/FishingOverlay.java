@@ -30,9 +30,10 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.time.Duration;
 import java.time.Instant;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import net.runelite.api.Client;
+import net.runelite.api.Skill;
+import net.runelite.client.plugins.xptracker.XpTrackerService;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.PanelComponent;
@@ -44,25 +45,23 @@ class FishingOverlay extends Overlay
 	private final Client client;
 	private final FishingPlugin plugin;
 	private final FishingConfig config;
+	private final XpTrackerService xpTrackerService;
+
 	private final PanelComponent panelComponent = new PanelComponent();
 
 	@Inject
-	public FishingOverlay(@Nullable Client client, FishingPlugin plugin, FishingConfig config)
+	public FishingOverlay(Client client, FishingPlugin plugin, FishingConfig config, XpTrackerService xpTrackerService)
 	{
 		setPosition(OverlayPosition.TOP_LEFT);
 		this.client = client;
 		this.plugin = plugin;
 		this.config = config;
+		this.xpTrackerService = xpTrackerService;
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics, Point parent)
 	{
-		if (!config.enabled())
-		{
-			return null;
-		}
-
 		FishingSession session = plugin.getSession();
 
 		if (session.getLastFishCaught() == null)
@@ -90,18 +89,22 @@ class FishingOverlay extends Overlay
 			panelComponent.setTitleColor(Color.RED);
 		}
 
-		panelComponent.getLines().add(new PanelComponent.Line(
-			"Caught fish:",
-			Integer.toString(session.getTotalFished())
-		));
+		int actions = xpTrackerService.getActions(Skill.FISHING);
+		if (actions > 0)
+		{
+			panelComponent.getLines().add(new PanelComponent.Line(
+				"Caught fish:",
+				Integer.toString(actions)
+			));
 
-
-		panelComponent.getLines().add(new PanelComponent.Line(
-			"Fish/hr:",
-			session.getRecentFished() > 2
-				? Integer.toString(session.getPerHour())
-				: ""
-		));
+			if (actions > 2)
+			{
+				panelComponent.getLines().add(new PanelComponent.Line(
+					"Fish/hr:",
+					Integer.toString(xpTrackerService.getActionsHr(Skill.FISHING))
+				));
+			}
+		}
 
 		return panelComponent.render(graphics, parent);
 	}

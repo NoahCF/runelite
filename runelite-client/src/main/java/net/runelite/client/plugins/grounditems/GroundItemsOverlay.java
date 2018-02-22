@@ -36,7 +36,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.Item;
@@ -88,7 +87,7 @@ public class GroundItemsOverlay extends Overlay
 	private ItemManager itemManager;
 
 	@Inject
-	public GroundItemsOverlay(@Nullable Client client, GroundItemsConfig config)
+	public GroundItemsOverlay(Client client, GroundItemsConfig config)
 	{
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
@@ -99,11 +98,6 @@ public class GroundItemsOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics, java.awt.Point parent)
 	{
-		if (!config.enabled())
-		{
-			return null;
-		}
-
 		// gets the hidden/highlighted items from the text box in the config
 		String configItems = config.getHiddenItems().toLowerCase();
 		List<String> hiddenItems = Arrays.asList(configItems.split(DELIMITER_REGEX));
@@ -159,7 +153,9 @@ public class GroundItemsOverlay extends Overlay
 					ItemComposition itemDefinition = itemManager.getItemComposition(itemId);
 
 					Integer currentQuantity = items.get(itemId);
-					if (!hiddenItems.contains(itemDefinition.getName().toLowerCase()))
+
+					String itemName = itemDefinition.getName().toLowerCase();
+					if (config.showHighlightedOnly() ? highlightedItems.contains(itemName) : !hiddenItems.contains(itemName))
 					{
 						if (itemDefinition.getNote() != -1)
 						{
@@ -185,8 +181,8 @@ public class GroundItemsOverlay extends Overlay
 							alchPrice = Math.round(itemDefinition.getPrice() * HIGH_ALCHEMY_CONSTANT) * quantity;
 						}
 						if (highlightedItems.contains(itemDefinition.getName().toLowerCase()) ||
-								gePrice == 0 || ((gePrice >= config.getHideUnderGeValue()) &&
-								(alchPrice >= config.getHideUnderHAValue())))
+							gePrice == 0 || ((gePrice >= config.getHideUnderGeValue()) &&
+							(alchPrice >= config.getHideUnderHAValue())))
 						{
 							items.put(itemId, quantity);
 						}

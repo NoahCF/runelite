@@ -25,7 +25,6 @@
 package net.runelite.client.plugins.cannon;
 
 import com.google.common.eventbus.Subscribe;
-import com.google.inject.Binder;
 import com.google.inject.Provides;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,7 +49,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.Overlay;
 
 @PluginDescriptor(
-	name = "Cannon plugin"
+	name = "Cannon"
 )
 public class CannonPlugin extends Plugin
 {
@@ -75,12 +74,6 @@ public class CannonPlugin extends Plugin
 	@Inject
 	private Client client;
 
-	@Override
-	public void configure(Binder binder)
-	{
-		binder.bind(CannonOverlay.class);
-	}
-
 	@Provides
 	CannonConfig provideConfig(ConfigManager configManager)
 	{
@@ -91,6 +84,14 @@ public class CannonPlugin extends Plugin
 	public Overlay getOverlay()
 	{
 		return cannonOverlay;
+	}
+
+	@Override
+	protected void shutDown() throws Exception
+	{
+		cannonPlaced = false;
+		myCannon = null;
+		cballsLeft = 0;
 	}
 
 	@Subscribe

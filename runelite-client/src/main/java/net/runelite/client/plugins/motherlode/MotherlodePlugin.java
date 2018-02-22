@@ -27,7 +27,6 @@ package net.runelite.client.plugins.motherlode;
 
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
-import com.google.inject.Binder;
 import com.google.inject.Provides;
 import java.time.Duration;
 import java.time.Instant;
@@ -64,7 +63,8 @@ import net.runelite.client.task.Schedule;
 import net.runelite.client.ui.overlay.Overlay;
 
 @PluginDescriptor(
-	name = "Motherlode plugin"
+	name = "Motherlode",
+	enabledByDefault = false
 )
 public class MotherlodePlugin extends Plugin
 {
@@ -90,12 +90,6 @@ public class MotherlodePlugin extends Plugin
 	@Getter(AccessLevel.PACKAGE)
 	private final Set<GameObject> rocks = new HashSet<>();
 
-	@Override
-	public void configure(Binder binder)
-	{
-		binder.bind(MotherlodeOverlay.class);
-	}
-
 	@Provides
 	MotherlodeConfig getConfig(ConfigManager configManager)
 	{
@@ -106,6 +100,13 @@ public class MotherlodePlugin extends Plugin
 	public Collection<Overlay> getOverlays()
 	{
 		return Arrays.asList(overlay, rocksOverlay, motherlodeSackOverlay);
+	}
+
+	@Override
+	protected void shutDown() throws Exception
+	{
+		veins.clear();
+		rocks.clear();
 	}
 
 	public MotherlodeSession getSession()

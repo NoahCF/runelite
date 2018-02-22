@@ -30,7 +30,6 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Arc2D;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
@@ -69,7 +68,7 @@ public class TrapOverlay extends Overlay
 	private Color colorTrans, colorTransBorder;
 
 	@Inject
-	TrapOverlay(@Nullable Client client, HunterPlugin plugin, HunterConfig config)
+	TrapOverlay(Client client, HunterPlugin plugin, HunterConfig config)
 	{
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
@@ -81,10 +80,7 @@ public class TrapOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics, Point parent)
 	{
-		if (config.enabled())
-		{
-			drawTraps(graphics);
-		}
+		drawTraps(graphics);
 		return null;
 	}
 
@@ -114,7 +110,8 @@ public class TrapOverlay extends Overlay
 		Widget viewport = client.getViewportWidget();
 		for (HunterTrap trap : plugin.getTraps())
 		{
-			if (viewport != null && viewport.contains(trap.getGameObject().getCanvasLocation()))
+			net.runelite.api.Point trapLoc = trap.getGameObject().getCanvasLocation();
+			if (viewport != null && trapLoc != null && viewport.contains(trapLoc))
 			{
 				switch (trap.getState())
 				{

@@ -24,7 +24,6 @@
  */
 package net.runelite.client.plugins.devtools;
 
-import com.google.inject.Binder;
 import java.awt.Font;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
@@ -37,7 +36,7 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.Overlay;
 
 @PluginDescriptor(
-	name = "Developer tools plugin",
+	name = "Developer tools",
 	developerPlugin = true
 )
 public class DevToolsPlugin extends Plugin
@@ -63,13 +62,6 @@ public class DevToolsPlugin extends Plugin
 
 	private Font font;
 	private NavigationButton navButton;
-
-	@Override
-	public void configure(Binder binder)
-	{
-		binder.bind(DevToolsOverlay.class);
-		binder.bind(DevToolsPanel.class);
-	}
 
 	@Override
 	protected void startUp() throws Exception

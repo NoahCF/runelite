@@ -45,8 +45,6 @@ import net.runelite.api.PacketBuffer;
 import net.runelite.api.Point;
 import net.runelite.api.Projectile;
 import net.runelite.api.Region;
-import net.runelite.api.Script;
-import net.runelite.api.events.ScriptEvent;
 import net.runelite.client.RuneLite;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.game.DeathChecker;
@@ -170,28 +168,6 @@ public class Hooks
 		}
 	}
 
-	/**
-	 *
-	 * @param opcode
-	 * @param script
-	 * @param isOne
-	 * @return 0 halts, 1 continues, 2 throws
-	 */
-	public static int runeliteExecute(int opcode, Script script, boolean isOne)
-	{
-		String[] stringStack = client.getStringStack();
-		int stackSize = client.getStringStackSize();
-		String eventName = stringStack[--stackSize];
-		client.setStringStackSize(stackSize);
-
-		ScriptEvent event = new ScriptEvent();
-		event.setScript(script);
-		event.setEventName(eventName);
-		eventBus.post(event);
-
-		return 1;
-	}
-
 	public static void menuActionHook(int actionParam, int widgetId, int menuAction, int id, String menuOption, String menuTarget, int var6, int var7)
 	{
 		/* Along the way, the RuneScape client may change a menuAction by incrementing it with 2000.
@@ -202,9 +178,6 @@ public class Hooks
 			menuAction -= 2000;
 		}
 
-		log.debug("Menu action clicked: {} ({}) on {} ({} widget: {})",
-			menuOption, menuAction, menuTarget.isEmpty() ? "<nothing>" : menuTarget, id, actionParam, widgetId);
-
 		MenuOptionClicked menuOptionClicked = new MenuOptionClicked();
 		menuOptionClicked.setActionParam(actionParam);
 		menuOptionClicked.setMenuOption(menuOption);
@@ -212,6 +185,8 @@ public class Hooks
 		menuOptionClicked.setMenuAction(MenuAction.of(menuAction));
 		menuOptionClicked.setId(id);
 		menuOptionClicked.setWidgetId(widgetId);
+
+		log.debug("Menu action clicked: {}", menuOptionClicked);
 
 		eventBus.post(menuOptionClicked);
 	}
@@ -228,7 +203,7 @@ public class Hooks
 		eventBus.post(menuEntry);
 	}
 
-	public static void addChatMessage(int type, String sender, String message, String clan)
+	public static void addChatMessage(int type, String name, String message, String sender)
 	{
 		if (log.isDebugEnabled())
 		{
@@ -236,7 +211,7 @@ public class Hooks
 		}
 
 		ChatMessageType chatMessageType = ChatMessageType.of(type);
-		ChatMessage chatMessage = new ChatMessage(chatMessageType, sender, message, clan);
+		ChatMessage chatMessage = new ChatMessage(chatMessageType, name, message, sender);
 
 		eventBus.post(chatMessage);
 	}

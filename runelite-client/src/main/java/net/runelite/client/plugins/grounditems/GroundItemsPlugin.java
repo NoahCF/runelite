@@ -24,7 +24,6 @@
  */
 package net.runelite.client.plugins.grounditems;
 
-import com.google.inject.Binder;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 import net.runelite.client.config.ConfigManager;
@@ -33,7 +32,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.Overlay;
 
 @PluginDescriptor(
-	name = "Ground items plugin"
+	name = "Ground items"
 )
 public class GroundItemsPlugin extends Plugin
 {
@@ -42,12 +41,6 @@ public class GroundItemsPlugin extends Plugin
 
 	@Inject
 	private GroundItemsOverlay overlay;
-
-	@Override
-	public void configure(Binder binder)
-	{
-		binder.bind(GroundItemsOverlay.class);
-	}
 
 	@Provides
 	GroundItemsConfig provideConfig(ConfigManager configManager)

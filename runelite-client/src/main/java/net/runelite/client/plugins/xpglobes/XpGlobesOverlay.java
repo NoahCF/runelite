@@ -34,7 +34,6 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.text.DecimalFormat;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -73,7 +72,7 @@ public class XpGlobesOverlay extends Overlay
 	private static final int TOOLTIP_RECT_SIZE_X = 150;
 
 	@Inject
-	public XpGlobesOverlay(@Nullable Client client, XpGlobesPlugin plugin, XpGlobesConfig config)
+	public XpGlobesOverlay(Client client, XpGlobesPlugin plugin, XpGlobesConfig config)
 	{
 		setPosition(OverlayPosition.DYNAMIC);
 		setPriority(OverlayPriority.HIGH);
@@ -85,13 +84,6 @@ public class XpGlobesOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics, java.awt.Point point)
 	{
-
-		// won't draw if not logged in or not enabled
-		if (!config.enabled())
-		{
-			return null;
-		}
-
 		//check the width of the client if we can draw properly
 		int clientWidth = client.isResized() ? client.getCanvas().getWidth() : client.getViewportWidth();
 		if (clientWidth <= 0)

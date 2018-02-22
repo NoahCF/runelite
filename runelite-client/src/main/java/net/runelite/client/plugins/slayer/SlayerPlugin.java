@@ -24,9 +24,7 @@
  */
 package net.runelite.client.plugins.slayer;
 
-import static net.runelite.api.Skill.SLAYER;
 import com.google.common.eventbus.Subscribe;
-import com.google.inject.Binder;
 import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
 import java.time.temporal.ChronoUnit;
@@ -35,18 +33,20 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
+import joptsimple.internal.Strings;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.ItemID;
-import net.runelite.api.widgets.Widget;
-import net.runelite.api.widgets.WidgetInfo;
-import net.runelite.client.config.ConfigManager;
+import static net.runelite.api.Skill.SLAYER;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ConfigChanged;
 import net.runelite.api.events.ExperienceChanged;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetInfo;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -55,7 +55,7 @@ import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 
 @PluginDescriptor(
-	name = "Slayer plugin"
+	name = "Slayer"
 )
 @Slf4j
 public class SlayerPlugin extends Plugin
@@ -112,12 +112,6 @@ public class SlayerPlugin extends Plugin
 		removeCounter();
 	}
 
-	@Override
-	public void configure(Binder binder)
-	{
-		binder.bind(SlayerOverlay.class);
-	}
-
 	@Provides
 	SlayerConfig getConfig(ConfigManager configManager)
 	{
@@ -127,11 +121,6 @@ public class SlayerPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChange(GameStateChanged event)
 	{
-		if (!config.enabled())
-		{
-			return;
-		}
-
 		switch (event.getGameState())
 		{
 			case HOPPING:
@@ -163,11 +152,6 @@ public class SlayerPlugin extends Plugin
 	)
 	public void scheduledChecks()
 	{
-		if (!config.enabled())
-		{
-			return;
-		}
-
 		Widget NPCDialog = client.getWidget(WidgetInfo.DIALOG_NPC_TEXT);
 		if (NPCDialog != null)
 		{
@@ -204,7 +188,7 @@ public class SlayerPlugin extends Plugin
 	@Subscribe
 	public void onChatMessage(ChatMessage event)
 	{
-		if (!config.enabled() || event.getType() != ChatMessageType.SERVER)
+		if (event.getType() != ChatMessageType.SERVER)
 		{
 			return;
 		}
@@ -259,7 +243,14 @@ public class SlayerPlugin extends Plugin
 	@Subscribe
 	public void onExperienceChanged(ExperienceChanged event)
 	{
-		if (!config.enabled() || event.getSkill() != SLAYER)
+		if (event.getSkill() != SLAYER)
+		{
+			return;
+		}
+
+		int slayerExp = client.getSkillExperience(SLAYER);
+
+		if (slayerExp <= cachedXp)
 		{
 			return;
 		}
@@ -267,11 +258,12 @@ public class SlayerPlugin extends Plugin
 		if (cachedXp == 0)
 		{
 			// this is the initial xp sent on login
-			cachedXp = client.getSkillExperience(SLAYER);
+			cachedXp = slayerExp;
 			return;
 		}
 
 		killedOne();
+		cachedXp = slayerExp;
 	}
 
 	@Subscribe
@@ -282,12 +274,11 @@ public class SlayerPlugin extends Plugin
 			return;
 		}
 
-		boolean enabled = config.enabled() && config.showInfobox();
-		if (enabled && counter == null)
+		if (config.showInfobox())
 		{
 			addCounter();
 		}
-		else if (!enabled && counter != null)
+		else
 		{
 			removeCounter();
 		}
@@ -317,26 +308,20 @@ public class SlayerPlugin extends Plugin
 		taskName = name.toLowerCase();
 		amount = amt;
 		save();
-
 		removeCounter();
-
-		if (taskName.isEmpty() || !config.showInfobox())
-		{
-			return;
-		}
-
 		addCounter();
 	}
 
 	private void addCounter()
 	{
+		if (!config.showInfobox() || counter != null || Strings.isNullOrEmpty(taskName))
+		{
+			return;
+		}
+
 		Task task = Task.getTask(taskName);
 		int itemSpriteId = ItemID.ENCHANTED_GEM;
-		if (task == null)
-		{
-			log.debug("No slayer task for {} in the Task database", taskName);
-		}
-		else
+		if (task != null)
 		{
 			itemSpriteId = task.getItemSpriteId();
 		}
@@ -351,6 +336,11 @@ public class SlayerPlugin extends Plugin
 
 	private void removeCounter()
 	{
+		if (counter == null)
+		{
+			return;
+		}
+
 		infoBoxManager.removeInfoBox(counter);
 		counter = null;
 	}

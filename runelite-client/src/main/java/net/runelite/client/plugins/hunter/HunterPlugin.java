@@ -25,7 +25,6 @@
 package net.runelite.client.plugins.hunter;
 
 import com.google.common.eventbus.Subscribe;
-import com.google.inject.Binder;
 import com.google.inject.Provides;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -45,12 +44,12 @@ import net.runelite.api.GameState;
 import net.runelite.api.ObjectID;
 import net.runelite.api.Player;
 import net.runelite.api.Point;
-import net.runelite.api.queries.GameObjectQuery;
-import net.runelite.api.queries.PlayerQuery;
-import net.runelite.client.config.ConfigManager;
 import net.runelite.api.events.ConfigChanged;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.queries.GameObjectQuery;
+import net.runelite.api.queries.PlayerQuery;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.task.Schedule;
@@ -59,7 +58,7 @@ import net.runelite.client.util.QueryRunner;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Hunter plugin"
+	name = "Hunter"
 )
 public class HunterPlugin extends Plugin
 {
@@ -68,9 +67,6 @@ public class HunterPlugin extends Plugin
 
 	@Inject
 	private QueryRunner queryRunner;
-
-	@Inject
-	private HunterConfig config;
 
 	@Inject
 	private TrapOverlay trapOverlay;
@@ -87,13 +83,6 @@ public class HunterPlugin extends Plugin
 	@Getter
 	private Instant lastActionTime = Instant.ofEpochMilli(0);
 
-	@Override
-	public void configure(Binder binder)
-	{
-		binder.bind(TrapOverlay.class);
-		binder.bind(CatchrateOverlay.class);
-	}
-
 	@Provides
 	HunterConfig provideConfig(ConfigManager configManager)
 	{
@@ -106,14 +95,18 @@ public class HunterPlugin extends Plugin
 		return Arrays.asList(trapOverlay, catchrateOverlay);
 	}
 
+	@Override
+	protected void shutDown() throws Exception
+	{
+		catchAtempts = 0;
+		catchSuccess = 0;
+		lastActionTime = Instant.ofEpochMilli(0);
+		traps.clear();
+	}
+
 	@Subscribe
 	public void onGameObjectSpawned(GameObjectSpawned event)
 	{
-		if (!config.enabled())
-		{
-			return;
-		}
-
 		GameObject gameObject = event.getGameObject();
 
 		HunterTrap myTrap = getTrapFromCollection(gameObject);
@@ -131,6 +124,7 @@ public class HunterPlugin extends Plugin
 					lastActionTime = Instant.now();
 				}
 				break;
+			case ObjectID.MAGIC_BOX: // Imp box placed
 			case ObjectID.BOX_TRAP_9380: //Box trap placed
 			case ObjectID.BIRD_SNARE_9345: //Bird snare placed
 			case ObjectID.NET_TRAP_9343: //Net trap placed at green sallys
@@ -161,6 +155,7 @@ public class HunterPlugin extends Plugin
 
 				}
 				break;
+			case ObjectID.MAGIC_BOX_19226: // Imp caught
 			case ObjectID.SHAKING_BOX: //Black chinchompa caught
 			case ObjectID.SHAKING_BOX_9382: // Grey chinchompa caught
 			case ObjectID.SHAKING_BOX_9383: //Red chinchompa caught
@@ -187,6 +182,7 @@ public class HunterPlugin extends Plugin
 					lastActionTime = Instant.now();
 				}
 				break;
+			case ObjectID.MAGIC_BOX_FAILED: //Empty imp box
 			case ObjectID.BOX_TRAP_9385: //Empty box trap
 			case ObjectID.BIRD_SNARE: //Empty box trap
 				if (myTrap != null)
@@ -199,7 +195,10 @@ public class HunterPlugin extends Plugin
 					lastActionTime = Instant.now();
 				}
 				break;
-			//Black chin shaking box	
+			// Imp entering box
+			case ObjectID.MAGIC_BOX_19225:
+
+			//Black chin shaking box
 			case ObjectID.BOX_TRAP:
 			case ObjectID.BOX_TRAP_2026:
 			case ObjectID.BOX_TRAP_2028:
@@ -279,11 +278,6 @@ public class HunterPlugin extends Plugin
 	)
 	public void updateTraps()
 	{
-		if (!config.enabled())
-		{
-			return;
-		}
-
 		//Check if all traps are still there, and remove the ones that are not.
 		//TODO: use despawn events
 		Iterator<HunterTrap> it = traps.iterator();

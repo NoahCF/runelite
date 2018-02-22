@@ -32,6 +32,7 @@ public class WidgetID
 	public static final int DEPOSIT_BOX_GROUP_ID = 192;
 	public static final int INVENTORY_GROUP_ID = 149;
 	public static final int EQUIPMENT_GROUP_ID = 387;
+	public static final int RUNE_POUCH_GROUP_ID = 190;
 	public static final int DIARY_GROUP_ID = 259;
 	public static final int PESTRCONTROL_GROUP_ID = 408;
 	public static final int CLAN_CHAT_GROUP_ID = 7;
@@ -56,11 +57,16 @@ public class WidgetID
 	public static final int BA_DEFENDER_GROUP_ID = 487;
 	public static final int BA_HEALER_GROUP_ID = 488;
 	public static final int LEVEL_UP_GROUP_ID = 233;
+	public static final int DIALOG_SPRITE_GROUP_ID = 193;
 	public static final int QUEST_COMPLETED_GROUP_ID = 277;
 	public static final int CLUE_SCROLL_REWARD_GROUP_ID = 73;
 	public static final int BARROWS_REWARD_GROUP_ID = 155;
+	public static final int RAIDS_GROUP_ID = 513;
 	public static final int MOTHERLODE_MINE_GROUP_ID = 382;
 	public static final int EXPERIENCE_DROP_GROUP_ID = 122;
+	public static final int PUZZLE_BOX_GROUP_ID = 306;
+	public static final int NIGHTMARE_ZONE_GROUP_ID = 202;
+	public static final int BLAST_FURNACE_GROUP_ID = 474;
 
 	static class WorldMap
 	{
@@ -267,6 +273,11 @@ public class WidgetID
 		static final int NAME_TEXT = 2;
 	}
 
+	static class Raids
+	{
+		static final int POINTS_INFOBOX = 3;
+	}
+	
 	static class ExperienceDrop
 	{
 		static final int DROP_1 = 15;
@@ -276,5 +287,16 @@ public class WidgetID
 		static final int DROP_5 = 19;
 		static final int DROP_6 = 20;
 		static final int DROP_7 = 21;
+	}
+
+	static class PuzzleBox
+	{
+		static final int VISIBLE_BOX = 4;
+	}
+
+	static class DialogSprite
+	{
+		static final int SPRITE = 0;
+		static final int TEXT = 1;
 	}
 }

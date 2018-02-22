@@ -40,7 +40,7 @@ public interface Client extends GameEngine
 
 	int getRealSkillLevel(Skill skill);
 
-	void sendGameMessage(ChatMessageType type, String message);
+	void addChatMessage(ChatMessageType type, String name, String message, String sender);
 
 	GameState getGameState();
 
@@ -124,11 +124,15 @@ public interface Client extends GameEngine
 
 	int[] getMapRegions();
 
+	int[][][] getInstanceTemplateChunks();
+
 	int[][] getXteaKeys();
 
 	int[] getSettings();
 
 	int[] getWidgetSettings();
+
+	int getSetting(Setting setting);
 
 	int getSetting(Varbits varbit);
 
@@ -153,6 +157,8 @@ public interface Client extends GameEngine
 	Area[] getMapAreas();
 
 	IndexedSprite[] getMapScene();
+	
+	SpritePixels[] getMapDots();
 
 	int getGameCycle();
 
@@ -163,6 +169,8 @@ public interface Client extends GameEngine
 	void setModIcons(IndexedSprite[] modIcons);
 
 	IndexedSprite createIndexedSprite();
+
+	SpritePixels createSpritePixels(int[] pixels, int width, int height);
 
 	Point getSceneDestinationLocation();
 
@@ -276,4 +284,6 @@ public interface Client extends GameEngine
 	ClanMember[] getClanMembers();
 
 	boolean isClanMember(String name);
+
+	Preferences getPreferences();
 }

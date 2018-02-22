@@ -31,10 +31,19 @@ import java.awt.Point;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.stream.IntStream;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
-import static net.runelite.api.AnimationID.*;
+import static net.runelite.api.AnimationID.WOODCUTTING_ADAMANT;
+import static net.runelite.api.AnimationID.WOODCUTTING_BLACK;
+import static net.runelite.api.AnimationID.WOODCUTTING_BRONZE;
+import static net.runelite.api.AnimationID.WOODCUTTING_DRAGON;
+import static net.runelite.api.AnimationID.WOODCUTTING_INFERNAL;
+import static net.runelite.api.AnimationID.WOODCUTTING_IRON;
+import static net.runelite.api.AnimationID.WOODCUTTING_MITHRIL;
+import static net.runelite.api.AnimationID.WOODCUTTING_RUNE;
+import static net.runelite.api.AnimationID.WOODCUTTING_STEEL;
 import net.runelite.api.Client;
+import net.runelite.api.Skill;
+import net.runelite.client.plugins.xptracker.XpTrackerService;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.PanelComponent;
@@ -51,25 +60,22 @@ class WoodcuttingOverlay extends Overlay
 	private final Client client;
 	private final WoodcuttingPlugin plugin;
 	private final WoodcuttingConfig config;
+	private final XpTrackerService xpTrackerService;
 	private final PanelComponent panelComponent = new PanelComponent();
 
 	@Inject
-	public WoodcuttingOverlay(@Nullable Client client, WoodcuttingPlugin plugin, WoodcuttingConfig config)
+	public WoodcuttingOverlay(Client client, WoodcuttingPlugin plugin, WoodcuttingConfig config, XpTrackerService xpTrackerService)
 	{
 		setPosition(OverlayPosition.TOP_LEFT);
 		this.client = client;
 		this.plugin = plugin;
 		this.config = config;
+		this.xpTrackerService = xpTrackerService;
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics, Point parent)
 	{
-		if (!config.enabled())
-		{
-			return null;
-		}
-
 		WoodcuttingSession session = plugin.getSession();
 
 		if (session.getLastLogCut() == null)
@@ -98,18 +104,22 @@ class WoodcuttingOverlay extends Overlay
 			panelComponent.setTitleColor(Color.RED);
 		}
 
-		panelComponent.getLines().add(new PanelComponent.Line(
-			"Logs cut:",
-			Integer.toString(session.getTotalCut())
-		));
+		int actions = xpTrackerService.getActions(Skill.WOODCUTTING);
+		if (actions > 0)
+		{
+			panelComponent.getLines().add(new PanelComponent.Line(
+				"Logs cut:",
+				Integer.toString(actions)
+			));
 
-
-		panelComponent.getLines().add(new PanelComponent.Line(
-			"Logs/hr:",
-			session.getRecentCut() > 2
-				? Integer.toString(session.getPerHour())
-				: ""
-		));
+			if (actions > 2)
+			{
+				panelComponent.getLines().add(new PanelComponent.Line(
+					"Logs/hr:",
+					Integer.toString(xpTrackerService.getActionsHr(Skill.WOODCUTTING))
+				));
+			}
+		}
 
 		return panelComponent.render(graphics, parent);
 	}

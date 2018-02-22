@@ -24,7 +24,6 @@
  */
 package net.runelite.client.plugins.info;
 
-import com.google.inject.Binder;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import net.runelite.client.plugins.Plugin;
@@ -33,7 +32,7 @@ import net.runelite.client.ui.ClientUI;
 import net.runelite.client.ui.NavigationButton;
 
 @PluginDescriptor(
-	name = "Info panel plugin",
+	name = "Info panel",
 	loadWhenOutdated = true
 )
 public class InfoPlugin extends Plugin
@@ -41,11 +40,7 @@ public class InfoPlugin extends Plugin
 	@Inject
 	private ClientUI ui;
 
-	@Override
-	public void configure(Binder binder)
-	{
-		binder.bind(InfoPanel.class);
-	}
+	private NavigationButton navButton;
 
 	@Override
 	protected void startUp() throws Exception
@@ -53,12 +48,18 @@ public class InfoPlugin extends Plugin
 		final InfoPanel panel = injector.getInstance(InfoPanel.class);
 		panel.init();
 
-		final NavigationButton navButton = new NavigationButton(
+		navButton = new NavigationButton(
 			"Info",
 			ImageIO.read(getClass().getResourceAsStream("info_icon.png")),
 			() -> panel
 		);
 
 		ui.getPluginToolbar().addNavigation(navButton);
+	}
+
+	@Override
+	protected void shutDown()
+	{
+		ui.getPluginToolbar().removeNavigation(navButton);
 	}
 }

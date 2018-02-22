@@ -25,7 +25,6 @@
 package net.runelite.client.plugins.runecraft;
 
 import com.google.common.eventbus.Subscribe;
-import com.google.inject.Binder;
 import com.google.inject.Provides;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,7 +49,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.Overlay;
 
 @PluginDescriptor(
-	name = "Runecraft plugin"
+	name = "Runecraft"
 )
 public class RunecraftPlugin extends Plugin
 {
@@ -68,12 +67,6 @@ public class RunecraftPlugin extends Plugin
 	@Inject
 	private AbyssOverlay abyssOverlay;
 
-	@Override
-	public void configure(Binder binder)
-	{
-		binder.bind(RunecraftOverlay.class);
-	}
-
 	@Provides
 	RunecraftConfig getConfig(ConfigManager configManager)
 	{
@@ -90,6 +83,12 @@ public class RunecraftPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		abyssOverlay.updateConfig();
+	}
+
+	@Override
+	protected void shutDown() throws Exception
+	{
+		abyssObjects.clear();
 	}
 
 	@Subscribe

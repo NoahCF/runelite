@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, UniquePassive <https://github.com/uniquepassive>
+ * Copyright (c) 2018, Lotto <https://github.com/devLotto>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,12 +46,12 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -62,6 +62,7 @@ import net.runelite.api.events.WidgetHiddenChanged;
 import net.runelite.api.widgets.Widget;
 import static net.runelite.api.widgets.WidgetID.BARROWS_REWARD_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.CLUE_SCROLL_REWARD_GROUP_ID;
+import static net.runelite.api.widgets.WidgetID.DIALOG_SPRITE_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.LEVEL_UP_GROUP_ID;
 import static net.runelite.api.widgets.WidgetID.QUEST_COMPLETED_GROUP_ID;
 import net.runelite.api.widgets.WidgetInfo;
@@ -69,7 +70,6 @@ import static net.runelite.api.widgets.WidgetInfo.TO_GROUP;
 import net.runelite.client.Notifier;
 import net.runelite.client.RuneLite;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.events.ClientUILoaded;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.screenshot.imgur.ImageUploadRequest;
@@ -85,10 +85,9 @@ import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.pushingpixels.substance.internal.utils.SubstanceCoreUtilities;
 
 @PluginDescriptor(
-	name = "Screenshot plugin"
+	name = "Screenshot"
 )
 @Slf4j
 public class ScreenshotPlugin extends Plugin
@@ -98,7 +97,7 @@ public class ScreenshotPlugin extends Plugin
 	private static final MediaType JSON = MediaType.parse("application/json");
 
 	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM. dd, yyyy", Locale.US);
-	private static final DateFormat TIME_FORMAT = new SimpleDateFormat("h.m.s a d MMM. yyyy", Locale.US);
+	private static final DateFormat TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US);
 
 	private static final Pattern NUMBER_PATTERN = Pattern.compile("([0-9]+)");
 
@@ -122,6 +121,9 @@ public class ScreenshotPlugin extends Plugin
 	@Inject
 	private OverlayRenderer overlayRenderer;
 
+	@Inject
+	private ScheduledExecutorService executor;
+
 	private JButton titleBarButton;
 
 	@Provides
@@ -133,7 +135,6 @@ public class ScreenshotPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		// prior to UI loading this does nothing
 		addButtonToTitleBar();
 	}
 
@@ -141,12 +142,6 @@ public class ScreenshotPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		removeButtonFromTitlebar();
-	}
-
-	@Subscribe
-	public void clientUiLoaded(ClientUILoaded e)
-	{
-		addButtonToTitleBar();
 	}
 
 	private void addButtonToTitleBar()
@@ -170,7 +165,7 @@ public class ScreenshotPlugin extends Plugin
 					}
 				});
 
-				clientUi.addButtonToTitleBar(titleBarButton, iconImage, invertedIconImage, 130);
+				clientUi.getTitleToolbar().addButton(titleBarButton, iconImage, invertedIconImage);
 			});
 		}
 		catch (IOException ex)
@@ -183,14 +178,7 @@ public class ScreenshotPlugin extends Plugin
 	{
 		SwingUtilities.invokeLater(() ->
 		{
-			JComponent titleBar = SubstanceCoreUtilities.getTitlePaneComponent(clientUi);
-
-			if (titleBar != null)
-			{
-				titleBar.remove(titleBarButton);
-				clientUi.revalidate();
-				clientUi.repaint();
-			}
+			clientUi.getTitleToolbar().remove(titleBarButton);
 		});
 	}
 
@@ -266,22 +254,12 @@ public class ScreenshotPlugin extends Plugin
 		{
 			case LEVEL_UP_GROUP_ID:
 			{
-				Widget skillChild = client.getWidget(WidgetInfo.LEVEL_UP_SKILL);
-				Widget levelChild = client.getWidget(WidgetInfo.LEVEL_UP_LEVEL);
-
-				if (skillChild == null || levelChild == null)
-				{
-					return;
-				}
-
-				// "Your Firemaking level is now 9."
-				String skillText = skillChild.getText();
-				String levelText = levelChild.getText();
-
-				String skillName = skillText.substring(skillText.indexOf("a ") + 2, skillText.indexOf(" level."));
-				String skillLevel = levelText.substring(levelText.lastIndexOf(" ") + 1, levelText.length() - 1);
-
-				fileName = skillName + " (" + skillLevel + ")";
+				fileName = parseLevelUpWidget(WidgetInfo.LEVEL_UP_SKILL, WidgetInfo.LEVEL_UP_LEVEL);
+				break;
+			}
+			case DIALOG_SPRITE_GROUP_ID:
+			{
+				fileName = parseLevelUpWidget(WidgetInfo.DIALOG_SPRITE_SPRITE, WidgetInfo.DIALOG_SPRITE_TEXT);
 				break;
 			}
 			case QUEST_COMPLETED_GROUP_ID:
@@ -326,7 +304,34 @@ public class ScreenshotPlugin extends Plugin
 				return;
 		}
 
+		if (fileName == null)
+		{
+			return;
+		}
+
 		takeScreenshot(fileName, config.displayDate());
+	}
+
+	public String parseLevelUpWidget(WidgetInfo levelUpSkill, WidgetInfo levelUpLevel)
+	{
+		Widget skillChild = client.getWidget(levelUpSkill);
+		Widget levelChild = client.getWidget(levelUpLevel);
+
+		if (skillChild == null || levelChild == null)
+		{
+			return null;
+		}
+
+		// "Congratulations, you just advanced a Firemaking level."
+		String skillText = skillChild.getText();
+		// "Your Firemaking level is now 9."
+		String levelText = levelChild.getText();
+
+		String[] splitSkillName = skillText.split(" ");
+		String skillName = splitSkillName[splitSkillName.length - 2];
+		String skillLevel = levelText.substring(levelText.lastIndexOf(" ") + 1, levelText.length() - 1);
+
+		return skillName + "(" + skillLevel + ")";
 	}
 
 	private void takeScreenshot(String fileName, boolean displayDate)
@@ -396,34 +401,40 @@ public class ScreenshotPlugin extends Plugin
 				}
 			}
 
-			File playerFolder = RuneLite.SCREENSHOT_DIR;
-
+			File playerFolder;
 			if (client.getLocalPlayer() != null)
 			{
 				playerFolder = new File(RuneLite.SCREENSHOT_DIR, client.getLocalPlayer().getName());
 			}
+			else
+			{
+				playerFolder = RuneLite.SCREENSHOT_DIR;
+			}
 
 			playerFolder.mkdirs();
 
-			try
+			executor.execute(() ->
 			{
-				File screenshotFile = new File(playerFolder, fileName + ".png");
-
-				ImageIO.write(screenshot, "PNG", screenshotFile);
-
-				if (config.uploadScreenshot())
+				try
 				{
-					uploadScreenshot(screenshotFile);
+					File screenshotFile = new File(playerFolder, fileName + ".png");
+
+					ImageIO.write(screenshot, "PNG", screenshotFile);
+
+					if (config.uploadScreenshot())
+					{
+						uploadScreenshot(screenshotFile);
+					}
+					else if (config.notifyWhenTaken())
+					{
+						notifier.notify("A screenshot was saved to " + screenshotFile, TrayIcon.MessageType.INFO);
+					}
 				}
-				else if (config.notifyWhenTaken())
+				catch (IOException ex)
 				{
-					notifier.notify("A screenshot was saved to " + screenshotFile, TrayIcon.MessageType.INFO);
+					log.warn("error writing screenshot", ex);
 				}
-			}
-			catch (IOException ex)
-			{
-				log.warn("error writing screenshot", ex);
-			}
+			});
 		});
 	}
 

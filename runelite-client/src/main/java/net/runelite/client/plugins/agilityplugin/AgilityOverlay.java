@@ -28,7 +28,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.geom.Area;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -44,26 +43,19 @@ public class AgilityOverlay extends Overlay
 
 	private final Client client;
 	private final AgilityPlugin plugin;
-	private final AgilityPluginConfiguration config;
 
 	@Inject
-	public AgilityOverlay(@Nullable Client client, AgilityPlugin plugin, AgilityPluginConfiguration config)
+	public AgilityOverlay(Client client, AgilityPlugin plugin)
 	{
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
 		this.client = client;
 		this.plugin = plugin;
-		this.config = config;
 	}
 
 	@Override
 	public Dimension render(Graphics2D graphics, java.awt.Point parent)
 	{
-		if (!config.enabled())
-		{
-			return null;
-		}
-
 		Point playerLocation = client.getLocalPlayer().getLocalLocation();
 		Point mousePosition = client.getMouseCanvasPosition();
 		plugin.getObstacles().forEach((object, tile) ->

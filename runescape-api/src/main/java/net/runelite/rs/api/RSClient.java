@@ -204,8 +204,8 @@ public interface RSClient extends RSGameEngine, Client
 	@Import("worldList")
 	RSWorld[] getWorldList();
 
-	@Import("sendGameMessage")
-	void sendGameMessage(int var1, String var2, String var3);
+	@Import("addChatMessage")
+	void addChatMessage(int type, String name, String message, String sender);
 
 	@Override
 	@Import("getObjectDefinition")
@@ -276,6 +276,10 @@ public interface RSClient extends RSGameEngine, Client
 	@Override
 	int[] getMapRegions();
 
+	@Import("instanceTemplateChunks")
+	@Override
+	int[][][] getInstanceTemplateChunks();
+
 	@Import("xteaKeys")
 	@Override
 	int[][] getXteaKeys();
@@ -315,6 +319,9 @@ public interface RSClient extends RSGameEngine, Client
 	@Override
 	RSSpritePixels[] getMapIcons();
 
+	@Import("mapDots")
+	RSSpritePixels[] getMapDots();
+
 	@Import("modIcons")
 	@Override
 	RSIndexedSprite[] getModIcons();
@@ -325,6 +332,10 @@ public interface RSClient extends RSGameEngine, Client
 	@Construct
 	@Override
 	RSIndexedSprite createIndexedSprite();
+
+	@Construct
+	@Override
+	RSSpritePixels createSpritePixels(int[] pixels, int width, int height);
 
 	@Import("destinationX")
 	int getDestinationX();
@@ -407,11 +418,11 @@ public interface RSClient extends RSGameEngine, Client
 	@Import("regionLowMemory")
 	void setRegionLowMemory(boolean lowMemory);
 
-	@Import("highMemory")
-	void setHighMemory(boolean highMemory);
+	@Import("audioHighMemory")
+	void setAudioHighMemory(boolean highMemory);
 
-	@Import("ocLowDetail")
-	void setOcLowDetail(boolean lowDetail);
+	@Import("objectCompositionLowDetail")
+	void setObjectCompositionLowDetail(boolean lowDetail);
 
 	@Construct
 	RSItem createItem();
@@ -451,4 +462,14 @@ public interface RSClient extends RSGameEngine, Client
 
 	@Construct
 	RSName createName(String name, RSJagexLoginType type);
+
+	@Import("getVarbit")
+	int getVarbit(int varbitId);
+
+	@Import("varbits")
+	RSNodeCache getVarbitCache();
+
+	@Import("preferences")
+	@Override
+	RSPreferences getPreferences();
 }
