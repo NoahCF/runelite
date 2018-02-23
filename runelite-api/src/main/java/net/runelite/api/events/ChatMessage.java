@@ -36,4 +36,8 @@ public class ChatMessage
 	private String name;
 	private String message;
 	private String sender;
+
+	public String getMessage(){
+		return message;
+	}
 }
