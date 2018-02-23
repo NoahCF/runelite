@@ -11,6 +11,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.mockito.Mock;
+import java.time.Duration;
+import java.time.Instant;
 
 import static org.mockito.Matchers.any;
 
@@ -32,7 +34,6 @@ import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.components.PanelComponent;
 import org.mockito.stubbing.OngoingStubbing;
-
 
 @RunWith(MockitoJUnitRunner.class)
 public class FishingOverlayTest
@@ -87,26 +88,20 @@ public class FishingOverlayTest
 	public void testLastFishCaught()
 	{
 		FishingOverlay fishingOverlay = new FishingOverlay(client, plugin, config, xpTrackerService, session);
-
 		when(session.getLastFishCaught()).thenReturn(null);
+
         assertEquals(null, fishingOverlay.render(graphics, parent));
 
-	}
+	} //returns null because player is not fishing
 
-	//@Test
+	@Test
 	public void testOverlay()
 	{
         FishingOverlay fishingOverlay = new FishingOverlay(client, plugin, config, xpTrackerService, session);
-
         when(session.getLastFishCaught()).thenReturn(Instant.now());
-        //fishingOverlay.render(graphics, parent);
 
-		//works
-		//verify(fishingOverlay, times(1)).render(graphics, parent);
-
-		//fails - Actually, there were zero interactions with this mock.
-	//	verify(panelComponent, times(1)).setTitle("You are NOT fishing");
-	}
+        assertEquals(null, fishingOverlay.render(graphics, parent));
+	} //returns null because player is no longer fishing
 }
 
 
