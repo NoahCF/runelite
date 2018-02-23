@@ -46,6 +46,7 @@ class FishingOverlay extends Overlay
 	private final FishingPlugin plugin;
 	private final FishingConfig config;
 	private final XpTrackerService xpTrackerService;
+	private FishingSession session;
 
 	private final PanelComponent panelComponent = new PanelComponent();
 
@@ -59,10 +60,21 @@ class FishingOverlay extends Overlay
 		this.xpTrackerService = xpTrackerService;
 	}
 
+	@Inject
+	public FishingOverlay(Client client, FishingPlugin plugin, FishingConfig config, XpTrackerService xpTrackerService, FishingSession session)
+	{
+		setPosition(OverlayPosition.TOP_LEFT);
+		this.client = client;
+		this.plugin = plugin;
+		this.config = config;
+		this.xpTrackerService = xpTrackerService;
+		this.session = session;
+	}
+
 	@Override
 	public Dimension render(Graphics2D graphics, Point parent)
 	{
-		FishingSession session = plugin.getSession();
+		if (session == null) session = plugin.getSession();
 
 		if (session.getLastFishCaught() == null)
 		{

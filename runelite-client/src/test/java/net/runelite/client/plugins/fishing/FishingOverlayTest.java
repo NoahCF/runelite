@@ -38,9 +38,9 @@ import org.mockito.stubbing.OngoingStubbing;
 public class FishingOverlayTest
 {
 
-	@Mock
-	@Bind
-	FishingOverlay fishingOverlay;
+	//@Mock
+	//@Bind
+	//FishingOverlay fishingOverlay;
 
 	@Mock
 	@Bind
@@ -86,20 +86,23 @@ public class FishingOverlayTest
 	@Test
 	public void testLastFishCaught()
 	{
-		//fishingOverlay.render(graphics, point);
-		when(session.getLastFishCaught() == null).thenReturn(null);
-		//session.getLastFishCaught();
-		assertEquals(null, session.getLastFishCaught());
+		FishingOverlay fishingOverlay = new FishingOverlay(client, plugin, config, xpTrackerService, session);
+
+		when(session.getLastFishCaught()).thenReturn(null);
+        assertEquals(null, fishingOverlay.render(graphics, parent));
 
 	}
 
-	@Test
+	//@Test
 	public void testOverlay()
 	{
-		fishingOverlay.render(graphics, parent);
+        FishingOverlay fishingOverlay = new FishingOverlay(client, plugin, config, xpTrackerService, session);
+
+        when(session.getLastFishCaught()).thenReturn(Instant.now());
+        //fishingOverlay.render(graphics, parent);
 
 		//works
-		verify(fishingOverlay, times(1)).render(graphics, parent);
+		//verify(fishingOverlay, times(1)).render(graphics, parent);
 
 		//fails - Actually, there were zero interactions with this mock.
 	//	verify(panelComponent, times(1)).setTitle("You are NOT fishing");
